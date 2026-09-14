@@ -32,6 +32,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+/**
+ * Modern, consistent vertical scrollbar for Jetpack Compose LazyList.
+ * Always remains visible at a refined baseline alpha (0.6f) and brightens to 1.0f on scroll/drag.
+ */
 @Composable
 fun VerticalScrollbar(
     state: LazyListState,
@@ -72,7 +76,7 @@ fun VerticalScrollbar(
     }
 
     val alpha by animateFloatAsState(
-        targetValue = if (state.isScrollInProgress || isDragging) 1f else 0.5f,
+        targetValue = if (state.isScrollInProgress || isDragging) 1f else 0.65f,
         animationSpec = tween(durationMillis = 200),
         label = "scrollbar_alpha"
     )
@@ -99,6 +103,94 @@ fun VerticalScrollbar(
                 }
             }
             .pointerInput(totalItems, containerHeightPx, thumbHeightPx) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        scrollToY(offset.y)
+                    },
+                    onDragEnd = { isDragging = false },
+                    onDragCancel = { isDragging = false },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        scrollToY(change.position.y)
+                    }
+                )
+            }
+            .alpha(alpha)
+    ) {
+        // Track
+        Box(
+            modifier = Modifier
+                .width(6.dp)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+        )
+        // Thumb
+        Box(
+            modifier = Modifier
+                .width(8.dp)
+                .height(with(LocalDensity.current) { thumbHeightPx.toDp() })
+                .graphicsLayer { translationY = thumbOffsetPx }
+                .clip(RoundedCornerShape(4.dp))
+                .background(thumbColor)
+        )
+    }
+}
+
+/**
+ * Universal RecyclerView-compatible Vertical Scrollbar for Compose.
+ * Observes scroll position and item count directly, providing fluid drag-to-scroll and tap-to-scroll.
+ */
+@Composable
+fun RecyclerViewScrollbar(
+    itemCount: Int,
+    firstVisibleItemIndex: Int,
+    visibleItemCount: Int,
+    isScrolling: Boolean,
+    onScrollToPosition: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    thumbColor: Color = MaterialTheme.colorScheme.primary
+) {
+    if (itemCount <= 1 || visibleItemCount >= itemCount) return
+
+    var isDragging by remember { mutableStateOf(false) }
+    var containerHeightPx by remember { mutableFloatStateOf(1f) }
+
+    val thumbRatio = (visibleItemCount.toFloat() / itemCount.toFloat().coerceAtLeast(1f)).coerceIn(0.12f, 0.8f)
+    val thumbHeightPx = containerHeightPx * thumbRatio
+    val maxThumbOffsetPx = (containerHeightPx - thumbHeightPx).coerceAtLeast(1f)
+
+    val maxScrollIndex = (itemCount - visibleItemCount).coerceAtLeast(1)
+    val progress = (firstVisibleItemIndex.toFloat() / maxScrollIndex.toFloat()).coerceIn(0f, 1f)
+    val thumbOffsetPx = progress * maxThumbOffsetPx
+
+    val alpha by animateFloatAsState(
+        targetValue = if (isScrolling || isDragging) 1f else 0.65f,
+        animationSpec = tween(durationMillis = 200),
+        label = "rv_scrollbar_alpha"
+    )
+
+    fun scrollToY(yPx: Float) {
+        if (itemCount <= 0) return
+        val clampedY = (yPx - thumbHeightPx / 2f).coerceIn(0f, maxThumbOffsetPx)
+        val targetProgress = clampedY / maxThumbOffsetPx
+        val targetIndex = (targetProgress * (itemCount - 1)).toInt().coerceIn(0, itemCount - 1)
+        onScrollToPosition(targetIndex)
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .width(16.dp)
+            .padding(vertical = 4.dp)
+            .onSizeChanged { containerHeightPx = it.height.toFloat().coerceAtLeast(1f) }
+            .pointerInput(itemCount, containerHeightPx, thumbHeightPx) {
+                detectTapGestures { offset ->
+                    scrollToY(offset.y)
+                }
+            }
+            .pointerInput(itemCount, containerHeightPx, thumbHeightPx) {
                 detectDragGestures(
                     onDragStart = { offset ->
                         isDragging = true

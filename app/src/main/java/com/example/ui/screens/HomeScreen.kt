@@ -77,6 +77,7 @@ import com.example.model.AudioTrack
 import com.example.ui.components.MusicArtworkThumbnail
 import com.example.ui.components.StaticTrackThumbnail
 import com.example.ui.components.TrackItemRow
+import com.example.ui.components.VerticalScrollbar
 import com.example.viewmodel.PlayerViewModel
 
 @Composable
@@ -262,227 +263,236 @@ fun HomeScreen(
             }
 
             // Smooth Lazy List Area for Dashboard Content (Favorites Carousel + Recently Loaded Tracks)
-            LazyColumn(
-                state = listState,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .weight(1f)
             ) {
-                // Favorites Quick Carousel Section
-                item(key = "home_favorites_section") {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Favorite Tracks",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            if (favoriteTracks.isNotEmpty()) {
-                                Text(
-                                    text = "Play All",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .clickable { viewModel.playTrackList(favoriteTracks, 0) }
-                                        .padding(4.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (favoriteTracks.isEmpty()) {
-                            Card(
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Favorites Quick Carousel Section
+                    item(key = "home_favorites_section") {
+                        Column {
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                                shape = RoundedCornerShape(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "No favorite tracks yet. Tap star icon on any song to add!",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(16.dp)
+                                    text = "Favorite Tracks",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
-                            }
-                        } else {
-                            val isDarkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(vertical = 4.dp)
-                            ) {
-                                items(favoriteTracks, key = { it.id }) { track ->
-                                    val isTrackPlaying = currentTrack?.id == track.id
-                                    Card(
+                                if (favoriteTracks.isNotEmpty()) {
+                                    Text(
+                                        text = "Play All",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
                                         modifier = Modifier
-                                            .width(140.dp)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .clickable { viewModel.playTrack(track) }
-                                            .testTag("favorite_card_${track.id}"),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = if (isTrackPlaying) {
-                                                if (isDarkTheme) Color(0xFF223555) else Color(0xFFE2ECFA)
-                                            } else {
-                                                if (isDarkTheme) Color(0xFF1C2028) else Color(0xFFF1F5F9)
-                                            }
-                                        ),
-                                        border = BorderStroke(
-                                            width = if (isTrackPlaying) 1.5.dp else 1.dp,
-                                            color = if (isTrackPlaying) {
-                                                if (isDarkTheme) Color(0xFF3B82F6) else Color(0xFF2563EB)
-                                            } else {
-                                                if (isDarkTheme) Color(0xFF282D39) else Color(0xFFE2E8F0)
-                                            }
-                                        )
-                                    ) {
-                                        Column(modifier = Modifier.padding(10.dp)) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(110.dp)
-                                                    .clip(RoundedCornerShape(10.dp))
-                                                    .background(Color(0xFF232730)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                StaticTrackThumbnail(
-                                                    track = track,
-                                                    cornerRadius = 10.dp,
-                                                    modifier = Modifier.fillMaxSize()
-                                                )
+                                            .clickable { viewModel.playTrackList(favoriteTracks, 0) }
+                                            .padding(4.dp)
+                                    )
+                                }
+                            }
 
-                                                // Star toggle button on dashboard favorite item
-                                                IconButton(
-                                                    onClick = { viewModel.toggleFavorite(track.id) },
-                                                    modifier = Modifier
-                                                        .align(Alignment.TopEnd)
-                                                        .padding(4.dp)
-                                                        .size(28.dp)
-                                                        .background(Color(0xFF1E222B), CircleShape)
-                                                        .testTag("btn_favorite")
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Star,
-                                                        contentDescription = "Remove Favorite",
-                                                        tint = Color(0xFFFFC107),
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (favoriteTracks.isEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(
+                                        text = "No favorite tracks yet. Tap star icon on any song to add!",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+                            } else {
+                                val isDarkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    contentPadding = PaddingValues(vertical = 4.dp)
+                                ) {
+                                    items(favoriteTracks, key = { it.id }) { track ->
+                                        val isTrackPlaying = currentTrack?.id == track.id
+                                        Card(
+                                            modifier = Modifier
+                                                .width(140.dp)
+                                                .clip(RoundedCornerShape(14.dp))
+                                                .clickable { viewModel.playTrack(track) }
+                                                .testTag("favorite_card_${track.id}"),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (isTrackPlaying) {
+                                                    if (isDarkTheme) Color(0xFF223555) else Color(0xFFE2ECFA)
+                                                } else {
+                                                    if (isDarkTheme) Color(0xFF1C2028) else Color(0xFFF1F5F9)
                                                 }
+                                            ),
+                                            border = BorderStroke(
+                                                width = if (isTrackPlaying) 1.5.dp else 1.dp,
+                                                color = if (isTrackPlaying) {
+                                                    if (isDarkTheme) Color(0xFF3B82F6) else Color(0xFF2563EB)
+                                                } else {
+                                                    if (isDarkTheme) Color(0xFF282D39) else Color(0xFFE2E8F0)
+                                                }
+                                            )
+                                        ) {
+                                            Column(modifier = Modifier.padding(10.dp)) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(110.dp)
+                                                        .clip(RoundedCornerShape(10.dp))
+                                                        .background(Color(0xFF232730)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    StaticTrackThumbnail(
+                                                        track = track,
+                                                        cornerRadius = 10.dp,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
+
+                                                    // Star toggle button on dashboard favorite item
+                                                    IconButton(
+                                                        onClick = { viewModel.toggleFavorite(track.id) },
+                                                        modifier = Modifier
+                                                            .align(Alignment.TopEnd)
+                                                            .padding(4.dp)
+                                                            .size(28.dp)
+                                                            .background(Color(0xFF1E222B), CircleShape)
+                                                            .testTag("btn_favorite")
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Star,
+                                                            contentDescription = "Remove Favorite",
+                                                            tint = Color(0xFFFFC107),
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = track.title,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = if (isTrackPlaying) FontWeight.Bold else FontWeight.SemiBold,
+                                                    color = if (isTrackPlaying) {
+                                                        if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF0F172A)
+                                                    } else {
+                                                        if (isDarkTheme) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+                                                    },
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = track.artist,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (isTrackPlaying) {
+                                                        if (isDarkTheme) Color(0xFF93C5FD) else Color(0xFF1E40AF)
+                                                    } else {
+                                                        if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF475569)
+                                                    },
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
                                             }
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = track.title,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = if (isTrackPlaying) FontWeight.Bold else FontWeight.SemiBold,
-                                                color = if (isTrackPlaying) {
-                                                    if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF0F172A)
-                                                } else {
-                                                    if (isDarkTheme) Color(0xFFF8FAFC) else Color(0xFF0F172A)
-                                                },
-                                                maxLines = 1,
-                                                softWrap = false,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Text(
-                                                text = track.artist,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (isTrackPlaying) {
-                                                    if (isDarkTheme) Color(0xFF93C5FD) else Color(0xFF1E40AF)
-                                                } else {
-                                                    if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF475569)
-                                                },
-                                                maxLines = 1,
-                                                softWrap = false,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                // Recent Tracks Section Header
-                item(key = "home_recent_tracks_header") {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Recently Loaded Tracks",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                    // Recent Tracks Section Header
+                    item(key = "home_recent_tracks_header") {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Recently Loaded Tracks",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
 
-                        if (tracks.isNotEmpty() || queueTracks.isNotEmpty()) {
-                            IconButton(
-                                onClick = { viewModel.clearRecentlyLoadedTracks() },
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .testTag("home_clear_tracks_button")
+                            if (tracks.isNotEmpty() || queueTracks.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { viewModel.clearRecentlyLoadedTracks() },
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .testTag("home_clear_tracks_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ClearAll,
+                                        contentDescription = "Clear Recently Loaded Tracks",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+
+                    // Recent Tracks Item Rows
+                    if (tracks.isEmpty()) {
+                        item(key = "home_empty_tracks") {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.ClearAll,
-                                    contentDescription = "Clear Recently Loaded Tracks",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(20.dp)
+                                Text(
+                                    text = "No audio tracks loaded yet.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(16.dp)
                                 )
                             }
                         }
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
-                }
-
-                // Recent Tracks Item Rows
-                if (tracks.isEmpty()) {
-                    item(key = "home_empty_tracks") {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = "No audio tracks loaded yet.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(16.dp)
+                    } else {
+                        items(
+                            items = tracks,
+                            key = { it.id }
+                        ) { track ->
+                            val isCurrent = currentTrack?.id == track.id
+                            TrackItemRow(
+                                track = track,
+                                isCurrent = isCurrent,
+                                isPlaying = isCurrent && isPlaying,
+                                isFavorite = favoriteIds.contains(track.id),
+                                isSelected = false,
+                                showCheckbox = false,
+                                onTrackClick = { viewModel.playTrack(track) },
+                                onFavoriteClick = { viewModel.toggleFavorite(track.id) },
+                                onAddToQueueClick = { viewModel.addToQueue(track) },
+                                modifier = Modifier.testTag("home_recent_track_${track.id}")
                             )
                         }
                     }
-                } else {
-                    items(
-                        items = tracks,
-                        key = { it.id }
-                    ) { track ->
-                        val isCurrent = currentTrack?.id == track.id
-                        TrackItemRow(
-                            track = track,
-                            isCurrent = isCurrent,
-                            isPlaying = isCurrent && isPlaying,
-                            isFavorite = favoriteIds.contains(track.id),
-                            isSelected = false,
-                            showCheckbox = false,
-                            onTrackClick = { viewModel.playTrack(track) },
-                            onFavoriteClick = { viewModel.toggleFavorite(track.id) },
-                            onAddToQueueClick = { viewModel.addToQueue(track) },
-                            modifier = Modifier.testTag("home_recent_track_${track.id}")
-                        )
+
+                    // Bottom spacing for floating dock clearance
+                    item(key = "home_bottom_spacer") {
+                        Spacer(modifier = Modifier.height(120.dp))
                     }
                 }
 
-                // Bottom spacing for floating dock clearance
-                item(key = "home_bottom_spacer") {
-                    Spacer(modifier = Modifier.height(120.dp))
-                }
+                VerticalScrollbar(
+                    state = listState,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
             }
         }
     }

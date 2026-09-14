@@ -118,6 +118,11 @@ fun ReorderableQueueList(
     val topPaddingPx = with(density) { 6.dp.roundToPx() }
     val bottomPaddingPx = with(density) { 80.dp.roundToPx() }
 
+    var firstVisibleIndex by remember { mutableStateOf(0) }
+    var visibleCount by remember { mutableStateOf(10) }
+    var isScrolling by remember { mutableStateOf(false) }
+    var recyclerViewRef by remember { mutableStateOf<RecyclerView?>(null) }
+
     // Keep updated lambda references to prevent stale closures inside ViewHolder bindings
     val currentOnTrackClick by rememberUpdatedState(onTrackClick)
     val currentOnToggleSelect by rememberUpdatedState(onToggleSelect)
@@ -126,58 +131,93 @@ fun ReorderableQueueList(
     val currentOnRemoveItem by rememberUpdatedState(onRemoveItem)
     val currentCanReorder by rememberUpdatedState(canReorder)
 
-    AndroidView(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .clipToBounds()
-            .testTag("playlist_sheet_tracks_list"),
-        factory = { ctx ->
-            val recyclerView = RecyclerView(ctx).apply {
-                layoutManager = LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, false)
-                setHasFixedSize(true)
-                clipToPadding = true
-                clipChildren = true
-                setPadding(0, topPaddingPx, 0, bottomPaddingPx)
-                (itemAnimator as? DefaultItemAnimator)?.apply {
-                    supportsChangeAnimations = false
-                    moveDuration = 180
+    ) {
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(end = 26.dp)
+                .testTag("playlist_sheet_tracks_list"),
+            factory = { ctx ->
+                val recyclerView = RecyclerView(ctx).apply {
+                    layoutManager = LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, false)
+                    setHasFixedSize(true)
+                    clipToPadding = true
+                    clipChildren = true
+                    setPadding(0, topPaddingPx, 0, bottomPaddingPx)
+                    (itemAnimator as? DefaultItemAnimator)?.apply {
+                        supportsChangeAnimations = false
+                        moveDuration = 180
+                    }
+                    addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                        override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
+                            super.onScrollStateChanged(rv, newState)
+                            isScrolling = newState != RecyclerView.SCROLL_STATE_IDLE
+                        }
+
+                        override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                            super.onScrolled(rv, dx, dy)
+                            val lm = rv.layoutManager as? LinearLayoutManager ?: return
+                            firstVisibleIndex = lm.findFirstVisibleItemPosition().coerceAtLeast(0)
+                            val lastVisible = lm.findLastVisibleItemPosition().coerceAtLeast(0)
+                            visibleCount = (lastVisible - firstVisibleIndex + 1).coerceAtLeast(1)
+                        }
+                    })
                 }
+
+                val adapter = QueueTrackAdapter(
+                    initialTracks = tracks,
+                    initialCurrentTrackId = currentTrackId,
+                    initialSelectedTrackIds = selectedTrackIds,
+                    isDarkTheme = isDarkTheme,
+                    canReorderProvider = { currentCanReorder },
+                    onTrackClick = { currentOnTrackClick(it) },
+                    onToggleSelect = { currentOnToggleSelect(it) },
+                    onMoveItemStep = { from, to -> currentOnMoveItem(from, to) },
+                    onRemoveItem = { currentOnRemoveItem(it) },
+                    onReorderCommitted = { list, from, to -> currentOnReorderCommitted(list, from, to) }
+                )
+
+                val callback = QueueItemTouchHelperCallback(
+                    adapter = adapter,
+                    canDragProvider = { currentCanReorder }
+                )
+                val itemTouchHelper = ItemTouchHelper(callback)
+                itemTouchHelper.attachToRecyclerView(recyclerView)
+                adapter.itemTouchHelper = itemTouchHelper
+
+                recyclerView.adapter = adapter
+                recyclerViewRef = recyclerView
+                recyclerView
+            },
+            update = { recyclerView ->
+                recyclerViewRef = recyclerView
+                val adapter = recyclerView.adapter as? QueueTrackAdapter
+                adapter?.updateData(
+                    newTracks = tracks,
+                    newCurrentTrackId = currentTrackId,
+                    newSelectedIds = selectedTrackIds,
+                    newIsDarkTheme = isDarkTheme
+                )
             }
+        )
 
-            val adapter = QueueTrackAdapter(
-                initialTracks = tracks,
-                initialCurrentTrackId = currentTrackId,
-                initialSelectedTrackIds = selectedTrackIds,
-                isDarkTheme = isDarkTheme,
-                canReorderProvider = { currentCanReorder },
-                onTrackClick = { currentOnTrackClick(it) },
-                onToggleSelect = { currentOnToggleSelect(it) },
-                onMoveItemStep = { from, to -> currentOnMoveItem(from, to) },
-                onRemoveItem = { currentOnRemoveItem(it) },
-                onReorderCommitted = { list, from, to -> currentOnReorderCommitted(list, from, to) }
-            )
-
-            val callback = QueueItemTouchHelperCallback(
-                adapter = adapter,
-                canDragProvider = { currentCanReorder }
-            )
-            val itemTouchHelper = ItemTouchHelper(callback)
-            itemTouchHelper.attachToRecyclerView(recyclerView)
-            adapter.itemTouchHelper = itemTouchHelper
-
-            recyclerView.adapter = adapter
-            recyclerView
-        },
-        update = { recyclerView ->
-            val adapter = recyclerView.adapter as? QueueTrackAdapter
-            adapter?.updateData(
-                newTracks = tracks,
-                newCurrentTrackId = currentTrackId,
-                newSelectedIds = selectedTrackIds,
-                newIsDarkTheme = isDarkTheme
-            )
-        }
-    )
+        RecyclerViewScrollbar(
+            itemCount = tracks.size,
+            firstVisibleItemIndex = firstVisibleIndex,
+            visibleItemCount = visibleCount,
+            isScrolling = isScrolling,
+            onScrollToPosition = { pos ->
+                recyclerViewRef?.scrollToPosition(pos)
+            },
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 2.dp)
+        )
+    }
 }
 
 /**

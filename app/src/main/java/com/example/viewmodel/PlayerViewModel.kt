@@ -3,6 +3,7 @@ package com.example.viewmodel
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import androidx.core.content.ContextCompat
 import android.media.AudioManager
 import android.os.CountDownTimer
 import androidx.annotation.OptIn
@@ -186,11 +187,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 addAction("android.media.VOLUME_CHANGED_ACTION")
                 addAction("com.example.ACTION_TOGGLE_FAVORITE_EVENT")
             }
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                context.registerReceiver(broadcastReceiver, filter, Context.RECEIVER_EXPORTED)
-            } else {
-                context.registerReceiver(broadcastReceiver, filter)
-            }
+            ContextCompat.registerReceiver(
+                context,
+                broadcastReceiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }

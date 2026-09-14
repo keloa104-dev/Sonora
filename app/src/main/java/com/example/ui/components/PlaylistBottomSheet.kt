@@ -908,7 +908,6 @@ fun PlaylistBottomSheet(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clipToBounds()
-                                .padding(end = 20.dp)
                         )
                     } else {
                         // Folder Hierarchy List (Subfolders + Tracks in Folder)
@@ -917,7 +916,7 @@ fun PlaylistBottomSheet(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clipToBounds()
-                                .padding(end = 20.dp)
+                                .padding(end = 26.dp)
                                 .testTag("playlist_sheet_tracks_list")
                         ) {
                             // Subfolders section (When on folder tabs)
@@ -1173,12 +1172,14 @@ fun PlaylistBottomSheet(
                         }
                     }
 
-                    VerticalScrollbar(
-                        state = listState,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = 2.dp)
-                    )
+                    if (selectedTabIndex != 0) {
+                        VerticalScrollbar(
+                            state = listState,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 2.dp)
+                        )
+                    }
                 }
             }
         }

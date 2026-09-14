@@ -220,11 +220,16 @@ fun NowPlayingScreen(
         )
     }
 
+    val topCurvedShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer {
                 translationY = dragOffsetY.coerceAtLeast(0f)
+                clip = true
+                shape = topCurvedShape
+                shadowElevation = 16f
             }
             .then(
                 if (!showPlaylistSheet) {
@@ -248,13 +253,15 @@ fun NowPlayingScreen(
                 } else Modifier
             )
             .background(
-                Brush.verticalGradient(
+                brush = Brush.verticalGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.surface,
                         MaterialTheme.colorScheme.background
                     )
-                )
+                ),
+                shape = topCurvedShape
             )
+            .clip(topCurvedShape)
             .testTag("now_playing_screen")
     ) {
         Column(

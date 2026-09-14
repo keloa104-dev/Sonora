@@ -230,6 +230,7 @@ class PlayerService : MediaSessionService() {
                         .build()
                 }
 
+                @Suppress("WrongConstant")
                 override fun onCustomCommand(
                     session: MediaSession,
                     controller: MediaSession.ControllerInfo,
