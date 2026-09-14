@@ -1,0 +1,6 @@
+{
+  "name": "Sonora",
+  "description": "Full-featured audio player with Media3 ExoPlayer, custom library management, vertical volume slider, equalizer, and state persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
